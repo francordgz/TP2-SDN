@@ -1,3 +1,0 @@
-[submodule "src/pox"]
-	path = src/pox
-	url = https://github.com/noxrepo/pox.git
