@@ -12,6 +12,7 @@ import pox.openflow.libopenflow_01 as of
 from pox.lib.revent import *
 from pox.lib.util import dpidToStr
 from pox.lib.addresses import EthAddr
+from pox.lib.addresses import IPAddr
 from collections import namedtuple
 import pox.lib.packet as pkt
 import os
@@ -45,28 +46,27 @@ def cargar_reglas(nombre_archivo):
     return config.get("reglas", [])
 
 
-def obtener_protocolo_transporte(version_ip, protocolo_transporte):
-    if version_ip == "4" and protocolo_transporte == "TCP":
+def obtener_protocolo_transporte(protocolo_transporte):
+    if protocolo_transporte == "TCP":
         return pkt.ipv4.TCP_PROTOCOL
-    elif version_ip == "4" and protocolo_transporte == "UDP":
+    elif protocolo_transporte == "UDP":
         return pkt.ipv4.UDP_PROTOCOL
-    elif version_ip == "6" and protocolo_transporte == "TCP":
-        return pkt.ipv6.TCP_PROTOCOL
-    elif version_ip == "6" and protocolo_transporte == "UDP":
-        return pkt.ipv6.UDP_PROTOCOL
     else:
         return None
 
 
-def crear_regla_drop(dl_src=None, dl_dst=None, version_ip=None, protocolo_transporte=None, dst_port=None):
+def crear_regla_drop(dl_src=None, dl_dst=None, src_ip=None, dst_ip=None, version_ip=None, protocolo_transporte=None, dst_port=None, src_port=None):
     log.debug("Creo regla de drop para: dl_src=%s, dl_dst=%s, version_ip=%s, protocolo_transporte=%s, dst_port=%s",
               dl_src, dl_dst, version_ip, protocolo_transporte, dst_port)
     msg = of.ofp_flow_mod()
     msg.match.dl_src = EthAddr(dl_src) if dl_src else None
     msg.match.dl_dst = EthAddr(dl_dst) if dl_dst else None
+    msg.match.nw_src = IPAddr(src_ip) if src_ip else None
+    msg.match.nw_dst = IPAddr(dst_ip) if dst_ip else None
     msg.match.dl_type = obtener_dl_type(version_ip) if version_ip else None
-    msg.match.nw_proto = obtener_protocolo_transporte(version_ip, protocolo_transporte) if protocolo_transporte else None
+    msg.match.nw_proto = obtener_protocolo_transporte(protocolo_transporte) if protocolo_transporte else None
     msg.match.tp_dst = int(dst_port) if dst_port else None
+    msg.match.tp_src = int(src_port) if src_port else None
     msg.actions = []  # Drop
     return msg
 
@@ -85,9 +85,12 @@ class Firewall(EventMixin):
             for regla in cargar_reglas(NOMBRE_ARCHIVO_CONFIGURACION):
                 msg = crear_regla_drop(dl_src=regla.get("src_mac"),
                                        dl_dst=regla.get("dst_mac"),
+                                       src_ip=regla.get("src_ip"),
+                                       dst_ip=regla.get("dst_ip"),
                                        version_ip=regla.get("ip_version"),
                                        protocolo_transporte=regla.get("transport_protocol"),
-                                       dst_port=regla.get("dst_port"))
+                                       dst_port=regla.get("dst_port"),
+                                       src_port=regla.get("src_port"))
                 event.connection.send(msg)
 
 
