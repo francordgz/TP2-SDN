@@ -16,13 +16,11 @@ from collections import namedtuple
 import pox.lib.packet as pkt
 import os
 import json
-''' Add your imports here ... '''
 
 log = core.getLogger()
-policyFile = "%s/pox/pox/misc/firewall-policies.csv" % os.environ['HOME']
 
-''' Add your global variables here ... '''
 DPID_FIREWALL_SWITCH = 1
+
 NOMBRE_ARCHIVO_CONFIGURACION = os.path.join(
     os.path.dirname(__file__),
     "..", "config.json"
@@ -61,7 +59,8 @@ def obtener_protocolo_transporte(version_ip, protocolo_transporte):
 
 
 def crear_regla_drop(dl_src=None, dl_dst=None, version_ip=None, protocolo_transporte=None, dst_port=None):
-    log.debug("Creo regla de drop para: dl_src=%s, dl_dst=%s", dl_src, dl_dst)
+    log.debug("Creo regla de drop para: dl_src=%s, dl_dst=%s, version_ip=%s, protocolo_transporte=%s, dst_port=%s",
+              dl_src, dl_dst, version_ip, protocolo_transporte, dst_port)
     msg = of.ofp_flow_mod()
     msg.match.dl_src = EthAddr(dl_src) if dl_src else None
     msg.match.dl_dst = EthAddr(dl_dst) if dl_dst else None
