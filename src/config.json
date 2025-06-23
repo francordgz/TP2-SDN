@@ -1,12 +1,28 @@
 {
     "reglas": [
         {
-            "dl_src": "00:00:00:00:00:01",
-            "dl_dst": "00:00:00:00:00:03"
+            "dst_port": 80,
+            "ip_version": "4",
+            "transport_protocol": "TCP"
         },
         {
-            "dl_src": "00:00:00:00:00:03",
-            "dl_dst": "00:00:00:00:00:01"
+            "dst_port": 80,
+            "ip_version": "4",
+            "transport_protocol": "UDP"
+        },
+        {
+            "ip_version": "4",
+            "src_mac": "00:00:00:00:00:01",
+            "dst_port": 5001,
+            "transport_protocol": "UDP"
+        },
+        {
+            "src_mac": "00:00:00:00:00:01",
+            "dst_mac": "00:00:00:00:00:03"
+        },
+        {
+            "src_mac": "00:00:00:00:00:03",
+            "dst_mac": "00:00:00:00:00:01"
         }
     ]
 }
