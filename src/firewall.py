@@ -23,17 +23,20 @@ policyFile = "%s/pox/pox/misc/firewall-policies.csv" % os.environ['HOME']
 ''' Add your global variables here ... '''
 DPID_FIREWALL_SWITCH = 1
 
-NOMBRE_ARCHIVO_CONFIGURACION = "config.json"
+NOMBRE_ARCHIVO_CONFIGURACION = os.path.join(
+    os.path.dirname(__file__),
+    "..", "config.json"
+)
 
 
 def cargar_reglas(nombre_archivo):
-    file = open(nombre_archivo)
-    config = json.load(file)
-    file.close()
+    with open(nombre_archivo) as file:
+        config = json.load(file)
     return config.get("reglas", [])
 
 
 def crear_regla_drop(dl_src=None, dl_dst=None):
+    log.debug("Creo regla de drop para: dl_src=%s, dl_dst=%s", dl_src, dl_dst)
     msg = of.ofp_flow_mod()
     msg.match.dl_src = EthAddr(dl_src) if dl_src else None
     msg.match.dl_dst = EthAddr(dl_dst) if dl_dst else None
