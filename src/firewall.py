@@ -14,17 +14,31 @@ from pox.lib.util import dpidToStr
 from pox.lib.addresses import EthAddr
 from collections import namedtuple
 import os
+import json
 ''' Add your imports here ... '''
 
 log = core.getLogger()
 policyFile = "%s/pox/pox/misc/firewall-policies.csv" % os.environ['HOME']
 
 ''' Add your global variables here ... '''
+DPID_FIREWALL_SWITCH = 1
 
-MAC_H1 = EthAddr("00:00:00:00:00:01")
-MAC_H3 = EthAddr("00:00:00:00:00:03")
+NOMBRE_ARCHIVO_CONFIGURACION = "config.json"
 
-S2_DPID = 2
+
+def cargar_reglas(nombre_archivo):
+    file = open(nombre_archivo)
+    config = json.load(file)
+    file.close()
+    return config.get("reglas", [])
+
+
+def crear_regla_drop(dl_src=None, dl_dst=None):
+    msg = of.ofp_flow_mod()
+    msg.match.dl_src = EthAddr(dl_src) if dl_src else None
+    msg.match.dl_dst = EthAddr(dl_dst) if dl_dst else None
+    msg.actions = []  # Drop
+    return msg
 
 
 class Firewall(EventMixin):
@@ -35,16 +49,12 @@ class Firewall(EventMixin):
 
     def _handle_ConnectionUp(self, event):
         ''' Add your logic here ... '''
-        if event.dpid == S2_DPID:
-            log.info("Instalando reglas de bloqueo en s2")
+        if event.dpid == DPID_FIREWALL_SWITCH:
+            log.info("Instalando reglas de bloqueo en s" + str(DPID_FIREWALL_SWITCH))
 
-            for src, dst in [(MAC_H1, MAC_H3), (MAC_H3, MAC_H1)]:
-                msg = of.ofp_flow_mod()
-                msg.match.dl_src = src
-                msg.match.dl_dst = dst
-                msg.actions = []  # Drop
+            for regla in cargar_reglas(NOMBRE_ARCHIVO_CONFIGURACION):
+                msg = crear_regla_drop(dl_src=regla.get("dl_src"), dl_dst=regla.get("dl_dst"))
                 event.connection.send(msg)
-                log.debug("Bloqueo instalado: %s -> %s", src, dst)
 
 
 def launch():
