@@ -49,12 +49,18 @@
 
 \section{Introducción}\label{sec:intro}
 
-    ...
+    Este trabajo práctico tiene como objetivo introducir los conceptos fundamentales detrás de SDN y OpenFlow, y familiarizarse con la programación de dispositivos de red a través de una API. Se buscará comprender cómo estos enfoques permiten un control más preciso sobre el funcionamiento de los switches y habilitan una infraestructura de red más ágil, adaptable y preparada para las necesidades de hoy en día.
+
+
 
 \section{Hipótesis y supuestos realizados}\label{sec:supuestos}
 
-...
+    \begin{itemize}
+        \item La topología cuenta con al menos un switch. \\
 
+        \item El firewall está configurado en un único switch, por lo que las reglas se aplicarán únicamente si el tráfico entre el host origen y el host destino pasa a través de dicho switch.
+    \end{itemize}
+    
 \section{Implementación}\label{sec:implementacion}
 
 ...
@@ -67,14 +73,29 @@
 
     \subsection{¿Cuál es la diferencia entre un Switch y un router? ¿Qué tienen en común?}
 
-    ...
-        
+    La diferencia principal entre un Switch y un Router radica en la capa del modelo de red en la que operan y el tipo de dirección que utilizan para reenviar los datos. Un Switch opera principalmente en la capa de enlace y utiliza direcciones MAC (direcciones de enlace) para el reenvío, mientras que un Router opera en la capa de red y sus decisiones de reenvío se basan en direcciones IP (direcciones de red). \\
+    Tanto los switches como los routers comparten la función de conmutar paquetes, es decir, trasladar datos de un origen a un destino dentro de una red. Esta similitud funcional implica que ambos dispositivos deben enfrentar problemas similares, como la congestión de red.
+    
     \subsection{¿Cuál es la diferencia entre un Switch convencional y un Switch OpenFlow?}
 
     ...
      
     \subsection{¿Se pueden reemplazar todos los routers de la Internet por switches OpenFlow? Piense en el escenario inter-ASes para elaborar su respuesta.}
-    ...
+
+    \begin{itemize}
+        \item \textbf{Modelo de Control: Distribuido vs. Centralizado}
+        \\ Una diferencia fundamental entre los routers convencionales y los switches OpenFlow radica en el modelo de control que utilizan. Los routers tradicionales operan bajo un esquema de control distribuido, donde cada dispositivo calcula de forma autónoma sus tablas de enrutamiento a través del intercambio de información con otros routers, usando protocolos como BGP. En contraste, los switches OpenFlow implementan un modelo de control lógicamente centralizado, en el que un controlador remoto —que posee una visión global del estado de la red— es responsable de calcular, instalar y actualizar las tablas de flujo de los switches. Esta arquitectura centralizada permite una programación más flexible y coordinada del comportamiento de la red, en comparación con la toma de decisiones local de los routers convencionales. \\
+        
+        \item \textbf{Escalabilidad y Autonomía en el Enrutamiento Inter-AS}
+
+        Internet se estructura en miles de Sistemas Autónomos (AS), como los de un ISP o una gran organización. Esta organización responde principalmente a dos necesidades clave, la escalabilidad y la autonomía administrativa. A nivel de escalabilidad, sería inviable que cada router conociera todas las rutas posibles en Internet o difundiera constantemente información de estado a todos los demás dispositivos. Por otro lado, la autonomía permite que cada AS utilice sus propios algoritmos de enrutamiento interno y oculte detalles sobre su infraestructura.
+
+        \item \textbf{Desafíos de SDN en el Entorno Inter-AS Global}
+
+        Aunque las tecnologías como SDN y OpenFlow permiten que las redes sean más flexibles y fáciles de programar, su uso a gran escala (como en todo Internet) presenta grandes desafíos. Para reemplazar todos los routers actuales por switches OpenFlow, sería necesario un sistema de control central o varios controladores que trabajen en perfecta coordinación entre sí. Esto es muy difícil de lograr, ya que Internet está formado por miles de redes independientes (como los distintos ISP) que no siempre comparten información, objetivos o niveles de seguridad.
+        
+        
+    \end{itemize}
     
     \section{Dificultades encontradas}\label{sec:dificultadesEncontras}
     Algunas dificultades que surgieron en el avance del proyecto fueron:
