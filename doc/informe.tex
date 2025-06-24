@@ -10,6 +10,35 @@
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage[left=2.5cm, top=2.5cm, right=2.5cm, bottom=2.5cm]{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
 
 \usepackage{underscore} % Permite usar el carácter _ como literal
 
@@ -62,12 +91,144 @@
     \end{itemize}
     
 \section{Implementación}\label{sec:implementacion}
+A continuación se mostrará la implementación realizada. Se realizaron dos implementaciones, una para la topologia y otra para el firewall.
 
-...
+\subsection{Topologia}
+\lstinputlisting[language=Python]{src/topology.py}
+\\
+
+\subsubsection{Implementación}
+\begin{itemize}
+    \item Nuestra topologia recibe por parametro la cantidad de switches que se necesitan. \item Creamos 4 host especificandoles sus MAC address.
+    \item Luego creamos la cantidad de switches correspondientes.
+    \item Creamos la conexión con el primer switch y los hosts 1 y 2.
+    \item Conectamos todos los switches y al último switch le añadimos las conexiones con los hosts 3 y 4.
+\end{itemize} 
+
+\subsection{Firewall}
+\lstinputlisting[language=Python]{src/firewall.py}
 
 \section{Pruebas}\label{sec:pruebas}
 
-...
+En esta sección se mostrarán las pruebas realizadas.
+
+\subsection{Regla 1: No se aceptan mensajes al puerto 80}
+Se intentará enviar un mensaje desde el host 1 al host 4 al puerto 80 utilizando TCP.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla1_h1_tcp.png}
+    \caption{Regla 1 desde el host 1 (TCP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla1_h4_tcp.png}
+    \caption{Regla 1 desde el host 4 (TCP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla1_wireshark_tcp.png}
+    \caption{Wireshark para la regla 1 (TCP)}
+\end{figure}
+
+Se observa como desde h1 envia un mensaje SYN, pero desde el h4 no recibe respuesta. A su vez, desde el host 4 no envia ni recibe mensajes al host 1.
+
+También realizamos la prueba usando UDP.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla1_h1_udp.png}
+    \caption{Regla 1 desde el host 1 (UDP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla1_h4_udp.png}
+    \caption{Regla 1 desde el host 4 (UDP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla1_wireshark_udp.png}
+    \caption{Wireshark para la regla 1 (UDP)}
+\end{figure}
+
+Se observa como desde el host 1 se envian los mensajes, pero no recibe ningún ack por parte del host 4.
+Desde la perspectiva del host 4, no se envian ni se reciben mensajes al host 1.
+
+
+
+\subsection{Regla 2: Se descartan los mensajes del host 1 con puerto de destino 50001, usando UDP}
+En esta prueba, se descartan todos los mensajes provenientes del host 1 con puerto destino 5001 y que se este usando UDP.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla2_h1_udp.png}
+    \caption{Regla 2 desde el host 1 (UDP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla2_h4_udp.png}
+    \caption{Regla 2 desde el host 4 (UDP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla2_wireshark_udp.png}
+    \caption{Wireshark para la regla 2 (UDP)}
+\end{figure}
+
+Podemos observar, que desde el host 1 se envian los mensajes al puerto 5001 del host 4, pero no llegan ningún ack como respuesta por parte del host 4.
+Desde el lado del host 4, no se realiza ninguna acción.
+
+Probaremos enviar mensajes usando TCP y a otro puerto
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla2_h1_tcp.png}
+    \caption{Regla 2 desde el host 1 (TCP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla2_h4_tcp.png}
+    \caption{Regla 2 desde el host 4 (TCP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla2_wireshark_tcp.png}
+    \caption{Wireshark para la regla 2 (TCP)}
+\end{figure}
+
+En este caso, al utilizar TCP y enviar los mensajes al puerto 1000, se observa que el host 1 envió mensajes y recibió respuestas por parte del host 4.
+
+\subsection{Regla 3: No se pueden conectar el host 1 y el host 3}
+Ahora probamos enviar mensajes desde el host 1 al host 3, lo cual deberia ser imposible ya que los mensajes deberian ser droppeados. En este caso, usamos UDP
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla3_h1_udp.png}
+    \caption{Regla 3 desde el host 1 (UDP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla3_h3_udp.png}
+    \caption{Regla 3 desde el host 3 (UDP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla3_wireshark_udp.png}
+    \caption{Wireshark para la regla 3 (UDP)}
+\end{figure}
+
+Como resultado de esta prueba, el host 1 envió mensajes al host 3, pero no le llego respuestas por parte del host 3.
+
 
 \section{Preguntas}\label{sec:preguntasAResponder}
 

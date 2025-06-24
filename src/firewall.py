@@ -55,7 +55,9 @@ def obtener_protocolo_transporte(protocolo_transporte):
         return None
 
 
-def crear_regla_drop(dl_src=None, dl_dst=None, src_ip=None, dst_ip=None, version_ip=None, protocolo_transporte=None, dst_port=None, src_port=None):
+def crear_regla_drop(dl_src=None, dl_dst=None, src_ip=None, dst_ip=None,
+                     version_ip=None, protocolo_transporte=None, dst_port=None,
+                     src_port=None):
     log.debug("Creo regla de drop para: dl_src=%s, dl_dst=%s, version_ip=%s, protocolo_transporte=%s, dst_port=%s",
               dl_src, dl_dst, version_ip, protocolo_transporte, dst_port)
     msg = of.ofp_flow_mod()
