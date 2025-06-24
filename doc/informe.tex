@@ -67,7 +67,7 @@
       Martin Reimundo & 106716 & mreimundo@fi.uba.ar \\ \hline
       Franco Agustin Rodriguez & 108799 & frodriguez@fi.uba.ar \\ \hline
       Mateo Riat Sapulia & 106031 & mriat@fi.uba.ar \\ \hline
-      Ignacio Vetrano & 106129 & ivetrano@fi.uba.ar \\ \hline
+      Ignacio Ezequiel Vetrano & 106129 & ivetrano@fi.uba.ar \\ \hline
     \end{tabular}
     \vfill
     \vfill
@@ -85,18 +85,19 @@
 \section{Hipótesis y supuestos realizados}\label{sec:supuestos}
 
     \begin{itemize}
-        \item La topología cuenta con al menos un switch. \\
+        \item La topología cuenta con al menos un switch.
 
         \item El firewall está configurado en un único switch, por lo que las reglas se aplicarán únicamente si el tráfico entre el host origen y el host destino pasa a través de dicho switch.
+
+        \item Tanto las reglas 1 como 2 no se pueden bloquear en IPv6 debido al soporte que ofrece POX (OpenFlow 1.0, ya que no soporta matching de puertos IPv6)
     \end{itemize}
     
 \section{Implementación}\label{sec:implementacion}
 A continuación se mostrará la implementación realizada. Se realizaron dos implementaciones, una para la topologia y otra para el firewall.
 
 \subsection{Topologia}
+\subsubsection{Código}
 \lstinputlisting[language=Python]{src/topology.py}
-\\
-
 \subsubsection{Implementación}
 \begin{itemize}
     \item Nuestra topologia recibe por parametro la cantidad de switches que se necesitan. \item Creamos 4 host especificandoles sus MAC address.
@@ -106,11 +107,62 @@ A continuación se mostrará la implementación realizada. Se realizaron dos imp
 \end{itemize} 
 
 \subsection{Firewall}
+\subsubsection{Código}
 \lstinputlisting[language=Python]{src/firewall.py}
+\subsubsection{Implementación}
+Utilizamos como base para nuestro Firewall, un archivo extraído del curso SDN de Coursera propuesto por la cátedra.\\
+Para empezar, $\_handle\_ConnectionUp$ carga las reglas para un switch determinado. En nuestro caso, decidimos usar el switch 1. \\
+Las reglas se obtienen de un archivo $config.json$ y creamos un mensaje por cada regla, pasándole por parámetro los campos de la regla a la función $crear\_regla\_drop$. Los campos posibles serán:
+\begin{itemize}
+    \item $src\_mac$: la dirección MAC de origen
+    \item $dst\_mac$: la dirección MAC de destino
+    \item $src\_ip$: la dirección IP de origen
+    \item $dst\_ip$: la dirección IP de destino
+    \item $ip\_version$: la versión de IP
+    \item $transport\_protocol$: el tipo de protocolo de transporte
+    \item $src\_port$: el puerto de origen
+    \item $dst\_port$: el puerto de destino
+\end{itemize}
+Luego, a la hora de crear el mensaje para configurar el switch, se matchean los parámetros necesarios para la regla, y en caso de no haber\\ recibido, se asigna ese parametro a $None$.
+Mediante $event.connection.send(msg)$ se envia al switch para que lo configure.
 
 \section{Pruebas}\label{sec:pruebas}
 
 En esta sección se mostrarán las pruebas realizadas.
+\\
+Primero que nada y con el fin de verificar el funcionamiento, se utilizó \textit{iperf} para recibir y enviar paquetes, y \textit{Wireshark} en el switch S2 para detectar el tráfico de los mismos.
+\\
+Se utilizó la siguiente topología para comprobar el funcionamiento:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/topologia.png}
+    \caption{Topología utilizada para comprobar el funcionamiento.}
+\end{figure}
+
+\subsection{Funcionamiento normal cuando no matchea con ninguna regla}
+Para comprobar el funcionamiento cuando no se matchea con ninguna regla, probaremos enviar mensajes desde el host 1 usando TCP al host 4 por el puerto 1000
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla2_h1_tcp.png}
+    \caption{Regla 2 desde el host 1 (TCP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla2_h4_tcp.png}
+    \caption{Regla 2 desde el host 4 (TCP)}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/regla2_wireshark_tcp.png}
+    \caption{Wireshark para la regla 2 (TCP)}
+\end{figure}
+
+En este caso, al utilizar TCP y enviar los mensajes al puerto 1000, se observa que el host 1 envió mensajes y recibió respuestas por parte del host 4.
+
 
 \subsection{Regla 1: No se aceptan mensajes al puerto 80}
 Se intentará enviar un mensaje desde el host 1 al host 4 al puerto 80 utilizando TCP.
@@ -155,12 +207,11 @@ También realizamos la prueba usando UDP.
     \caption{Wireshark para la regla 1 (UDP)}
 \end{figure}
 
-Se observa como desde el host 1 se envian los mensajes, pero no recibe ningún ack por parte del host 4.
+Se observa como desde el host 1 se envian los mensajes, pero no recibe ningún ACK por parte del host 4.
 Desde la perspectiva del host 4, no se envian ni se reciben mensajes al host 1.
 
 
-
-\subsection{Regla 2: Se descartan los mensajes del host 1 con puerto de destino 50001, usando UDP}
+\subsection{Regla 2: Se descartan los mensajes del host 1 con puerto de destino 5001, usando UDP}
 En esta prueba, se descartan todos los mensajes provenientes del host 1 con puerto destino 5001 y que se este usando UDP.
 
 \begin{figure}[H]
@@ -181,30 +232,8 @@ En esta prueba, se descartan todos los mensajes provenientes del host 1 con puer
     \caption{Wireshark para la regla 2 (UDP)}
 \end{figure}
 
-Podemos observar, que desde el host 1 se envian los mensajes al puerto 5001 del host 4, pero no llegan ningún ack como respuesta por parte del host 4.
+Podemos observar que desde el host 1 se envian los mensajes al puerto 5001 del host 4, pero no llegan ningún ACK como respuesta por parte del host 4.
 Desde el lado del host 4, no se realiza ninguna acción.
-
-Probaremos enviar mensajes usando TCP y a otro puerto
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\textwidth]{img/regla2_h1_tcp.png}
-    \caption{Regla 2 desde el host 1 (TCP)}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\textwidth]{img/regla2_h4_tcp.png}
-    \caption{Regla 2 desde el host 4 (TCP)}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\textwidth]{img/regla2_wireshark_tcp.png}
-    \caption{Wireshark para la regla 2 (TCP)}
-\end{figure}
-
-En este caso, al utilizar TCP y enviar los mensajes al puerto 1000, se observa que el host 1 envió mensajes y recibió respuestas por parte del host 4.
 
 \subsection{Regla 3: No se pueden conectar el host 1 y el host 3}
 Ahora probamos enviar mensajes desde el host 1 al host 3, lo cual deberia ser imposible ya que los mensajes deberian ser droppeados. En este caso, usamos UDP
@@ -230,6 +259,7 @@ Ahora probamos enviar mensajes desde el host 1 al host 3, lo cual deberia ser im
 Como resultado de esta prueba, el host 1 envió mensajes al host 3, pero no le llego respuestas por parte del host 3.
 
 
+
 \section{Preguntas}\label{sec:preguntasAResponder}
 
     \subsection{¿Cuál es la diferencia entre un Switch y un router? ¿Qué tienen en común?}
@@ -239,21 +269,24 @@ Como resultado de esta prueba, el host 1 envió mensajes al host 3, pero no le l
     
     \subsection{¿Cuál es la diferencia entre un Switch convencional y un Switch OpenFlow?}
 
-    ...
+    La diferencia fundamental entre un switch convencional y un switch OpenFlow radica en cómo toman decisiones de reenvío y en su arquitectura de control. Un switch convencional opera de forma autónoma, reenviando tramas según la dirección MAC de destino. Aprende automáticamente estas direcciones observando el tráfico entrante y construye sus tablas de reenvío sin intervención externa. Su funcionalidad está determinada por el hardware y software del fabricante, lo que hace que tenga un comportamiento fijo y poco flexible. 
+    En cambio, un switch OpenFlow forma parte de una red basada en SDN, donde el plano de control está separado del plano de datos. Las decisiones de reenvío no las toma el switch por sí solo, sino que son definidas por un controlador SDN remoto que instala reglas en las llamadas tablas de flujo. Estas reglas pueden usar criterios de múltiples capas del protocolo (como direcciones IP, puertos TCP/UDP, tipo de protocolo, etc.), siguiendo un modelo "match plus action". Además de reenviar paquetes, un switch OpenFlow puede realizar acciones más complejas como reescritura de encabezados, bloqueo de tráfico, o redirección a servidores externos. Esta arquitectura permite una red mucho más flexible y programable, y favorece la interoperabilidad entre dispositivos, controladores y aplicaciones de diferentes proveedores.
      
     \subsection{¿Se pueden reemplazar todos los routers de la Internet por switches OpenFlow? Piense en el escenario inter-ASes para elaborar su respuesta.}
 
+    No, no es viable reemplazar todos los routers de Internet por switches OpenFlow, especialmente si consideramos el escenario inter-AS (entre Sistemas Autónomos). Existen varias razones técnicas y organizativas que lo impiden:
+    
     \begin{itemize}
         \item \textbf{Modelo de Control: Distribuido vs. Centralizado}
-        \\ Una diferencia fundamental entre los routers convencionales y los switches OpenFlow radica en el modelo de control que utilizan. Los routers tradicionales operan bajo un esquema de control distribuido, donde cada dispositivo calcula de forma autónoma sus tablas de enrutamiento a través del intercambio de información con otros routers, usando protocolos como BGP. En contraste, los switches OpenFlow implementan un modelo de control lógicamente centralizado, en el que un controlador remoto —que posee una visión global del estado de la red— es responsable de calcular, instalar y actualizar las tablas de flujo de los switches. Esta arquitectura centralizada permite una programación más flexible y coordinada del comportamiento de la red, en comparación con la toma de decisiones local de los routers convencionales. \\
+        \\ Los routers tradicionales funcionan bajo un modelo de control distribuido, donde cada uno toma decisiones de enrutamiento de manera autónoma mediante protocolos como BGP. Este enfoque permite adaptarse dinámicamente a cambios en la topología sin depender de una entidad central. En cambio, los switches OpenFlow utilizan un modelo centralizado, en el cual un controlador externo gestiona las decisiones de reenvío. Este enfoque puede ser eficiente en redes administradas por una sola organización, pero resulta difícil de escalar y mantener en un entorno global y descentralizado como Internet.
         
         \item \textbf{Escalabilidad y Autonomía en el Enrutamiento Inter-AS}
 
-        Internet se estructura en miles de Sistemas Autónomos (AS), como los de un ISP o una gran organización. Esta organización responde principalmente a dos necesidades clave, la escalabilidad y la autonomía administrativa. A nivel de escalabilidad, sería inviable que cada router conociera todas las rutas posibles en Internet o difundiera constantemente información de estado a todos los demás dispositivos. Por otro lado, la autonomía permite que cada AS utilice sus propios algoritmos de enrutamiento interno y oculte detalles sobre su infraestructura.
+        Internet está compuesta por miles de Sistemas Autónomos, como proveedores de servicios (ISPs) o grandes instituciones, que requieren autonomía en sus decisiones de enrutamiento y en su infraestructura. Cada AS puede definir sus propias políticas de enrutamiento y controlar qué información comparte. Un modelo basado en OpenFlow implicaría ceder parte de esta autonomía y compartir información con un controlador externo, lo cual va en contra de los principios de operación del sistema inter-AS.
 
         \item \textbf{Desafíos de SDN en el Entorno Inter-AS Global}
 
-        Aunque las tecnologías como SDN y OpenFlow permiten que las redes sean más flexibles y fáciles de programar, su uso a gran escala (como en todo Internet) presenta grandes desafíos. Para reemplazar todos los routers actuales por switches OpenFlow, sería necesario un sistema de control central o varios controladores que trabajen en perfecta coordinación entre sí. Esto es muy difícil de lograr, ya que Internet está formado por miles de redes independientes (como los distintos ISP) que no siempre comparten información, objetivos o niveles de seguridad.
+        Si bien SDN y OpenFlow aportan flexibilidad, su uso a gran escala (como en todo Internet) presenta grandes desafíos. Para reemplazar todos los routers actuales por switches OpenFlow, sería necesario un sistema de control central o varios controladores que trabajen en perfecta coordinación entre sí. Esto es muy difícil de lograr, ya que Internet está formado por miles de redes independientes (como los distintos ISP) que no siempre comparten información, objetivos o niveles de seguridad.
         
         
     \end{itemize}
@@ -262,10 +295,15 @@ Como resultado de esta prueba, el host 1 envió mensajes al host 3, pero no le l
     Algunas dificultades que surgieron en el avance del proyecto fueron:
     
     \begin{itemize}
-        \item ...
+        \item Detección del protocolo UDP
+        \item Familiarizarse con POX: Instalación y configuración
+        \item Comprensión de conceptos como IP blackholing
     \end{itemize}
     
 \section{Conclusion}\label{conclusion}
-    ...
-    
+    Se logró desarrollar correctamente y en tiempo y forma un firewall para bloqueo de distintos tipos de paquetes configurable para una topología programable, garantizando la colaboración mutua del grupo y poniendo en práctica todos los conceptos aprendidos en el transcurso de la materia.
+    \\
+    El presente trabajo fomentó la investigación del equipo para las dificultades planteadas en la sección previa, materializando de esta manera nuevas herramientas.
+    \\
+    Además, resulta importante mencionar que la realización del trabajo fue fundamental para entender el rol que ocupan las SDN hoy y en un futuro, donde el internet ha evolucionado a escalas que no se consideraron en el diseño inicial de los protocolos. Todos estos conceptos y herramientas introdujeron flexibilidad, dinamismo y eficiencia a la hora de distribuir los paquetes, además de interoperabilidad entre dispositivos, controladores y aplicaciones de diferentes proveedores.
 \end{document}
