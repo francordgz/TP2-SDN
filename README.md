@@ -71,12 +71,13 @@ El formato indicado sera el siguiente:
 
 - **Servidor**:
 
-        iperf -s -p [port] &
+        iperf -s -p [port]
 
 - **Cliente**:
 
         iperf -c [dst_host] -p [port]
         
+## Reglas
 
 - **Regla 1**: Descartar mensajes con puerto destino 80  
 
