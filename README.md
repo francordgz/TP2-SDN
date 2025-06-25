@@ -8,8 +8,8 @@
 Por si no cuenta con alguna dependencia, puede instalarla según lo establecido en la siguiente sección.
 
 ## Instalación de dependencias
+
 - Si no está en ambiente UNIX, dirigirse a https://www.python.org/downloads/ y descargar e instalar la última versión estable. Caso contrario, debería tenerlo instalado por defecto en su sistema. Si tiene más problemas, ejecute `sudo apt-get update` seguido de `sudo apt-get install python3.x`, siendo "x" la que corresponda a la última estable
-- `pip install flake8`: para verificar que el formato del código es correcto
 
 ## Instrucciones
 
@@ -38,7 +38,7 @@ Para ejecutar la topología definida, usar el siguiente comando:
 sudo mn --custom src/topology.py --topo customTopo,cantidad_switches=N --controller=remote --mac --arp --switch ovsk
 ```
 
-Siendo `N >= 1` la **cantidad de switches**, donde `N >= 1`.
+Siendo `N` la **cantidad de switches**, donde `N >= 1`.
 
 ### 3. Configurar el firewall en un switch específico
 
