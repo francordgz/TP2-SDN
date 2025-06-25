@@ -66,18 +66,18 @@ En cada regla será indicado:
 
 - Qué hosts deben abrirse con `xterm`.
 - Qué comandos deben ejecutarse en las terminales de esos hosts.
+        
+## Reglas
 
-El formato indicado sera el siguiente:
+El formato de los comandos para las reglas es el siguiente:
 
-- **Servidor**:
+**Servidor**:
 
         iperf -s -p [port]
 
-- **Cliente**:
+**Cliente**:
 
         iperf -c [dst_host] -p [port]
-        
-## Reglas
 
 - **Regla 1**: Descartar mensajes con puerto destino 80  
 
