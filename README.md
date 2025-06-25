@@ -50,7 +50,7 @@ DPID_FIREWALL_SWITCH = 1
 
 El valor de dicha constante debe ser un valor entero entre `1` y `N` (el `N` elegido para la topología).
 
-## Correr las reglas establecidas
+## Instrucciones para correr las reglas establecidas
 
 Para correr las siguientes reglas, ejecute el programa `xterm` dentro de la terminal de Mininet que quedó abierta luego de iniciar la topología con el módulo `firewall`.
 
@@ -95,5 +95,5 @@ El formato de los comandos para las reglas es el siguiente:
 
 - **Regla 3**: Bloqueo de comunicacion entre 2 hosts (por ejemplo entre host1 y host3)
 
-        h1: iperf -u -c 10.0.0.3 -p 10000
         h3: iperf -s -p 10000
+        h1: iperf -c 10.0.0.3 -p 10000
