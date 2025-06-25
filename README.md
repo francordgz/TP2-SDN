@@ -2,7 +2,7 @@
 ---
 ## Requisitos
 - Python 3.x
-- Herramientas para análisis de redes: Mininet, Wireshark, iperf
+- Herramientas para análisis de redes: Mininet, Wireshark, iperf, POX
 - Ejecutar en ambiente UNIX (opcional, pero recomendado)
 
 Por si no cuenta con alguna dependencia, puede instalarla según lo establecido en la siguiente sección.
