@@ -1,1 +1,4 @@
 .gitmodules
+*.sh
+*.txt
+.gitignore
