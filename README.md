@@ -2,7 +2,7 @@
 ---
 ## Requisitos
 - Python 3.x
-- Herramientas para análisis de redes: Mininet, Wireshark, iperf, POX
+- Herramientas para análisis de redes: Mininet, Wireshark, iperf, POX, xterm
 - Ejecutar en ambiente UNIX (opcional, pero recomendado)
 
 Por si no cuenta con alguna dependencia, puede instalarla según lo establecido en la siguiente sección.
@@ -49,3 +49,51 @@ DPID_FIREWALL_SWITCH = 1
 ```
 
 El valor de dicha constante debe ser un valor entero entre `1` y `N` (el `N` elegido para la topología).
+
+## Instrucciones para correr las reglas establecidas
+
+Para correr las siguientes reglas, ejecute el programa `xterm` dentro de la terminal de Mininet que quedó abierta luego de iniciar la topología con el módulo `firewall`.
+
+Desde el prompt de Mininet, utilice el siguiente comando:
+
+```bash
+mininet> xterm hx hy
+```
+
+Donde `hx` y `hy` son los nombres de los hosts que participarán en una determinada regla.
+
+En cada regla será indicado:
+
+- Qué hosts deben abrirse con `xterm`.
+- Qué comandos deben ejecutarse en las terminales de esos hosts.
+        
+## Reglas
+
+El formato de los comandos para las reglas es el siguiente:
+
+**Servidor**:
+
+        iperf -s -p [port]
+
+**Cliente**:
+
+        iperf -c [dst_host] -p [port]
+
+- **Regla 1**: Descartar mensajes con puerto destino 80  
+
+        h2: iperf -u -s -p 80
+        h1: iperf -u -c 10.0.0.2 -p 80 
+    
+    Para que los mensajes lleguen correctamente utilizar otro puerto.
+
+- **Regla 2**: Descartar mensajes desde el host 1 al puerto 5001 usando UDP  
+
+        h4: iperf -u -s -p 5001 
+        h1: iperf -u -c 10.0.0.4 -p 5001
+
+    Para que los mensajes lleguen correctamente utilizar otro puerto.
+
+- **Regla 3**: Bloqueo de comunicacion entre 2 hosts (por ejemplo entre host1 y host3)
+
+        h3: iperf -s -p 10000
+        h1: iperf -c 10.0.0.3 -p 10000
